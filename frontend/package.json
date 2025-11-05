@@ -1,0 +1,29 @@
+{
+  "name": "frontend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "start": "vite"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.1.16",
+    "@vitejs/plugin-react": "^5.0.4",
+    "axios": "^1.7.2",
+    "framer-motion": "^12.23.24",
+    "jwt-decode": "^4.0.0",
+    "lucide-react": "^0.548.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.23.0",
+    "tailwindcss": "^4.1.16"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.16",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.6",
+    "vite": "^7.1.12"
+  }
+}

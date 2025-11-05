@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+@layer base, components, utilities;
+
+/* Custom global reset */
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+  background: linear-gradient(to bottom right, #e0f2ff, #ffffff, #dbeafe);
+}
