@@ -1,5 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import { useAuth } from "./context/AuthContext.jsx";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 // Home
 import Home from "./pages/Home.jsx";
@@ -21,8 +20,6 @@ import RecruiterRegister from "./pages/Register/RecruiterRegister.jsx";
 import RecruiterDashboard from "./pages/Dashboard/RecruiterDashboard.jsx";
 
 const App = () => {
-  const { user } = useAuth();
-
   return (
     <Router>
       <Routes>
@@ -33,29 +30,17 @@ const App = () => {
         {/* Student */}
         <Route path="/student/login" element={<StudentLogin />} />
         <Route path="/student/register" element={<StudentRegister />} />
-        <Route
-          path="/student/dashboard"
-          element={user ? <StudentDashboard /> : <Navigate to="/student/login" replace />}
-        />
+        <Route path="/student/dashboard" element={<StudentDashboard />} />
 
         {/* Admin */}
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/register" element={<AdminRegister />} />
-        <Route
-          path="/admin/dashboard"
-          element={user ? <AdminDashboard /> : <Navigate to="/admin/login" replace />}
-        />
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
 
         {/* Recruiter */}
         <Route path="/recruiter/login" element={<RecruiterLogin />} />
         <Route path="/recruiter/register" element={<RecruiterRegister />} />
-        <Route
-          path="/recruiter/dashboard"
-          element={user ? <RecruiterDashboard /> : <Navigate to="/recruiter/login" replace />}
-        />
-
-        {/* Redirect any unknown route */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="/recruiter/dashboard" element={<RecruiterDashboard />} />
       </Routes>
     </Router>
   );
