@@ -1,103 +1,116 @@
 import express from "express";
-import { protect } from "../middleware/authMiddleware.js";
 import User from "../models/User.js";
 import Job from "../models/Job.js";
 import Application from "../models/Application.js";
+import authMiddleware from "../middleware/auth.js";
 
 const router = express.Router();
 
-router.put("/profile", protect, async (req, res) => {
+// Get student dashboard data
+router.get("/dashboard", authMiddleware, async (req, res) => {
   try {
-    const student = await User.findById(req.user.id);
-    if (!student || student.role !== "student") {
-      return res.status(403).json({ message: "Access denied" });
-    }
+    const student = await User.findById(req.userId).select("-password");
+    if (!student) return res.status(404).json({ error: "Student not found" });
 
-    student.profile = req.body.profile;
-    await student.save();
+    const jobs = await Job.find({ status: "active" });
+    const applications = await Application.find({ studentId: req.userId });
+    const shortlisted = applications.filter(app => app.status === "shortlisted").length;
 
-    res.json({ message: "Profile updated successfully", student });
-  } catch (err) {
-    console.error("❌ Profile update error:", err);
-    res.status(500).json({ message: "Server error" });
+    res.json({
+      student,
+      courses: jobs,
+      stats: {
+        totalJobs: jobs.length,
+        applied: applications.length,
+        shortlisted
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 
-// 🧭 Student Dashboard
-router.get("/dashboard", protect, async (req, res) => {
+// Update student profile
+router.put("/profile", authMiddleware, async (req, res) => {
   try {
-    const student = await User.findById(req.user.id).select("-password");
-    if (!student || student.role !== "student") {
-      return res.status(403).json({ message: "Access denied" });
+    const { profile } = req.body;
+    const student = await User.findByIdAndUpdate(
+      req.userId,
+      { 
+        name: profile.name,
+        "profile.branch": profile.branch,
+        "profile.year": profile.year,
+        "profile.resume": profile.resume
+      },
+      { new: true }
+    ).select("-password");
+
+    res.json({ success: true, student });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Apply for a job
+router.post("/apply/:jobId", authMiddleware, async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    const studentId = req.userId;
+
+    const alreadyApplied = await Application.findOne({ jobId, studentId });
+    if (alreadyApplied) {
+      return res.status(400).json({ message: "Already applied" });
     }
 
-    const jobs = await Job.find({ status: "active" }).select(
-      "title company description eligibility lastDate"
+    await Application.create({ jobId, studentId, status: "applied" });
+
+    // Add notification
+    await User.findByIdAndUpdate(studentId, {
+      $push: {
+        notifications: { 
+          message: "Your application has been submitted!",
+          read: false
+        }
+      }
+    });
+
+    res.json({ message: "Applied successfully", success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get student's applications
+router.get("/my-applications", authMiddleware, async (req, res) => {
+  try {
+    const applications = await Application.find({ studentId: req.userId })
+      .populate("jobId");
+    res.json(applications);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get notifications
+router.get("/notifications", authMiddleware, async (req, res) => {
+  try {
+    const student = await User.findById(req.userId).select("notifications");
+    res.json(student.notifications);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Mark notification as read
+router.put("/notifications/:notificationId", authMiddleware, async (req, res) => {
+  try {
+    await User.updateOne(
+      { _id: req.userId, "notifications._id": req.params.notificationId },
+      { $set: { "notifications.$.read": true } }
     );
-
-    const applications = await Application.find({ studentId: student._id })
-      .populate("jobId", "title company");
-
-    res.json({ student, jobs, applications });
-  } catch (err) {
-    console.error("❌ Dashboard error:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-// 📝 Update Student Profile
-router.put("/profile", protect, async (req, res) => {
-  try {
-    const { resume, cgpa, branch, skills, phone, college } = req.body;
-
-    const student = await User.findById(req.user.id);
-    if (!student) return res.status(404).json({ message: "User not found" });
-
-    student.profile = {
-      ...student.profile,
-      resume: resume || student.profile?.resume,
-      cgpa: cgpa || student.profile?.cgpa,
-      branch: branch || student.profile?.branch,
-      skills: skills || student.profile?.skills,
-      phone: phone || student.profile?.phone,
-      college: college || student.profile?.college,
-    };
-
-    await student.save();
-    res.json({ message: "Profile updated successfully", student });
-  } catch (err) {
-    console.error("❌ Profile update error:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-// 🚀 Apply to Job (using stored profile info)
-router.post("/apply/:jobId", protect, async (req, res) => {
-  try {
-    const student = await User.findById(req.user.id);
-    const jobId = req.params.jobId;
-
-    // Check duplicate
-    const existing = await Application.findOne({
-      studentId: student._id,
-      jobId,
-    });
-    if (existing)
-      return res.status(400).json({ message: "Already applied to this job" });
-
-    // Create new application
-    const application = new Application({
-      studentId: student._id,
-      jobId,
-      resume: student.profile?.resume,
-      status: "applied",
-    });
-
-    await application.save();
-    res.json({ message: "Applied successfully", application });
-  } catch (err) {
-    console.error("❌ Apply error:", err);
-    res.status(500).json({ message: "Server error" });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 

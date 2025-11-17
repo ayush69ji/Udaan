@@ -6,6 +6,7 @@ import authRoutes from './routes/authRoutes.js';
 import jobRoutes from './routes/jobRoutes.js';
 import applicationRoutes from './routes/applicationRoutes.js';
 import studentRoutes from "./routes/studentRoutes.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
 
 
 
@@ -21,6 +22,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use("/api/student", studentRoutes);
 app.use('/api/applications', applicationRoutes);
+app.use("/api/notifications", notificationRoutes);
+
 
 app.get('/', (req, res) => {
   res.send('UDAAN Placement Backend Running...');

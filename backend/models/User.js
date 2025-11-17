@@ -1,22 +1,28 @@
 import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  role: {
-    type: String,
-    enum: ["student", "recruiter", "admin"],
-    required: true,
-  },
+  name: String,
+  email: { type: String, unique: true },
+  password: String,
+  role: { type: String, enum: ["student", "recruiter", "admin"] },
+
   profile: {
-    resume: { type: String }, // URL or filename
-    cgpa: { type: Number },
-    branch: { type: String },
-    skills: [{ type: String }],
-    phone: { type: String },
-    college: { type: String },
+    resume: String,
+    cgpa: Number,
+    branch: String,
+    year: Number,
+    skills: [String],
+    phone: String,
+    college: { type: String, default: "IET DAVV" }
   },
+
+  notifications: [
+    {
+      message: String,
+      read: { type: Boolean, default: false },
+      createdAt: { type: Date, default: Date.now }
+    }
+  ]
 });
 
 export default mongoose.model("User", userSchema);
